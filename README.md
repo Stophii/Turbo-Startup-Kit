@@ -2,11 +2,9 @@
 
 ## Description
 
-A walkthrough on some Rust syntax and Turbo macros!
+Follow along and get started making games fast with these useful tools!
 
-> **Tip** This [video](https://youtu.be/g6EFmxjdR_o) goes over this written guide
-
-## What You'll Need
+## Some Basic Structure
 
 Initialize a Turbo project with `turbo init projectname`. You can replace `projectname` with whatever you desire. After that, run your project with `turbo run -w projectname`.
 
@@ -39,155 +37,108 @@ turbo::go! {
     state.save();
 }
 ```
-
 Now we have a basic template structured with `turbo::init!` and `turbo::go!`.
 
 > **Tip:** I'd recommend downloading the extension, [Rust Analyzer](https://marketplace.visualstudio.com/items/?itemName=rust-lang.rust-analyzer).
 
-## Initialization and Types
+## More than Lib.rs
 
-Go ahead and paste this over the `turbo::init!` we just set up:
-
-> **Tip:** You can save your project for real-time updates with `cmd + s` or `ctrl + s`.
+Whenever you make games rarely will they be just one file. Adding multiple files is easy with turbo. Let's create a new file and add this line to the top of it:
 
 ```rust
-turbo::init! {
-    struct GameState {
-        //name: type,
-        decimal_number: f32,
-        positive_number: u32,
-        negative_number: i32,
-        true_or_false: bool,
-        words: String,
-        list_of_decimal_numbers: Vec<f32>,
-        list_of_words: Vec<String>,
-        optional_positive_number: Option<u32>,
-    } = {
-        Self {
-            //name: value,
-            decimal_number: 0.0,
-            positive_number: 1,
-            negative_number: -1,
-            true_or_false: false,
-            words: "Hello, World!".to_string(),
-            list_of_decimal_numbers: Vec::new(),
-            list_of_words: Vec::new(),
-            optional_positive_number: None,
+use crate::*;
+```
+
+And in order to use this new file we'll need to add these lines to the top of our `lib.rs`
+
+```rust
+mod filename;
+use filename::*;
+```
+
+By adding mod and use to the top of your file, you can utilize your new file seamlessly
+
+In this example im going to name my file `state.rs` so my `mod` and `use` will look like this
+
+```rust
+mod state;
+use state::*;
+```
+
+> **Tip:** You can save your project for real-time updates with `cmd + s` or `ctrl + s`. And you can reload it with `cmd + r` or `ctrl + r`! Troubleshoot and make games fast by saving and testing a lot!
+
+
+## State Machine
+
+lets add some substance to that second file and include a state machine in our project
+
+```rust
+#[derive(BorshDeserialize, BorshSerialize, Debug, Clone, PartialEq)]
+pub enum Screen {
+    Title,
+    Game,
+}
+```
+Once we have the enum in we can add in our `state_of_game` function
+
+```rust
+pub fn state_of_game(state: &mut GameState) {
+    match state.screen {
+        Screen::Title => {
+          clear(0xffffffff);
+	        if gamepad(0).a.just_pressed() {
+		        state.screen = Screen::Game;
+	        }
+        },
+        Screen::Game => {
+          clear(0x000000ff);
+        	if gamepad(0).a.just_pressed() {
+		        state.screen = Screen::Title;
+		    }
+        },
+        _ => {
+        
         }
     }
 }
 ```
 
-For each **field** I have in my struct, I have to give it a _name_ and a _type_. When I look at the first **field**, it is named `decimal_number` and its _type_ is an `f32`, or a _decimal number_. I’ve named all of the fields appropriately to their type.
-
-Down below we can see `Self {`, which is where we give the field its value specific to the type we set in `GameState {`. Let’s use the first, `decimal_number`, as an example.
+This is not going to work until we add in our `screen` to our `gamestate` in `lib.rs`
 
 ```rust
+turbo::init! {
     struct GameState {
-        //name: type,
-        decimal_number: f32,
-        // other gamestate fields
+        screen: Screen,
+
     } = {
         Self {
-            //name: value,
-            decimal_number: 0.0,
-            // other gamestate fields
+            screen: Screen::Title,
+
+        }
+    }
+}
 ```
 
-`decimal_number` was set as an `f32` and then initialized to `0.0`. Initializing fields correctly is one of the first things to hone in on in Rust. This process is called initialization — hence the name `Turbo::init!`. This runs once at the beginning of your project to set up its initial values.
-
-## Basic Turbo Macros
-
-Some basic macros you can find a lot of mileage with in Turbo are `rect`, `ellipse`, `text`, `log`, and `gamepad`.
-
-Drawing boxes and text can help you set up the beginning title screen or menus for your game. Let’s add in those macros into our go loop:
-
-> **Tip:** If you are starting out, try using `just_pressed` instead of `pressed` for gamepad input!
-
-Replace this:
+and finally we add in our function to run in the `turbo::go!` loop
 
 ```rust
 turbo::go! {
     let mut state = GameState::load();
-
+    state_of_game(&mut state);
     state.save();
 }
 ```
 
-with:
+> **Tip:** You can check out the state machine Turbo-Tool [here](https://www.youtube.com/watch?v=6XMg5csFccw&t=1s)!
+
+## Adding Sprites
+
+Now lets get into adding some sprites! First off we need a sprites folder, this is as simple as making a new folder named `sprites` inside of the src folder of your project!
 
 ```rust
-turbo::go! {
-    let mut state = GameState::load();
 
-    rect!(x = 10, y = 20, w = 10, h = 20, color = 0xffffffff);
-    ellipse!(x = 30, y = 30, w = 10, h = 20, color = 0xffffffff);
-    text!("This is a sentence!\nThis is a new line for my sentence...", x = 40, y = 5, font = "medium", color = 0xffffffff);
-    if gamepad(0).a.just_pressed() {
-        // do something here!
-    }
-    if gamepad(0).b.just_pressed() {
-        // do something here!
-    }
-    if gamepad(0).start.just_pressed() {
-        // do something here!
-    }
-    if gamepad(0).up.just_pressed() {
-        // do something here!
-    }
-    log!("{}", state.words);
-
-    state.save();
-}
 ```
 
-If you save your project now, you can see it update in real time with the rectangle, ellipse, and text we just added.
-
-If you check your terminal, you'll also be able to see a log!
-
-> **Tip** Check out more Turbo Macros [here](https://docs.turbo.computer/learn/getting-started) in the API section
-
-## Mastering Turbo
-
-Writing Rust and blending that with Turbo's powerful macros will give you mastery over _**making games fast**_.
-
-From here on, you have the building blocks to get started. But if you'd like to learn a few more things, keep following along!
-
-Paste this block:
-
-```rust
-turbo::go! {
-    let mut state = GameState::load();
-
-    if gamepad(0).a.just_pressed() {
-        state.true_or_false = !state.true_or_false;
-        log!("value changed from {} to {}", !state.true_or_false, state.true_or_false)
-    }
-    if gamepad(0).b.pressed() {
-        rect!(x = 128, y = 72, w = state.positive_number, h = state.decimal_number, color = 0xffffffff);
-    }
-    if gamepad(0).start.just_pressed() {
-        state.list_of_decimal_numbers.push(1.1);
-        state.list_of_decimal_numbers.push(2.2);
-        state.list_of_decimal_numbers.push(3.3);
-        log!("added the numbers!");
-    }
-    if gamepad(0).up.just_pressed() {
-        state.decimal_number += 1.2;
-        state.positive_number += 1;
-        state.negative_number -= 1;
-        log!("my numbers have increased!")
-    }
-
-    let example = format!("decimal_number:{}\npositive_number:{}\nnegative_number:{}\nbool:{}", state.decimal_number, state.positive_number, state.negative_number, state.true_or_false);
-    text!(&example, x = 40, y = 5, font = "medium", color = 0xffffffff);
-
-    let vector = format!("decimal list: {:?}", state.list_of_decimal_numbers);
-    text!(&vector, x = 40, y = 55, font = "medium", color = 0xffffffff);
-
-    state.save();
-}
-```
 Over your `turbo::go!`.
 
 The above code is using some of the values we initialized in GameState and calls them with the `state.` prefix before the **field**. The purpose of this example is to showcase the use of our initialized fields and how we can change them. If you don't understand everything that is happening, that is quite alright — just understand the basic principles we've covered so far and build on that. Those principles are:
