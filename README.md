@@ -182,8 +182,8 @@ turbo::init! {
         Self {
             screen: Screen::Title,
             wizzy_tween: Tween::new(150.0)
-                .duration(60)
-                .ease(Easing::EaseInCirc),
+                .duration(120)
+                .ease(Easing::EaseOutCubic),
 
         }
     }
