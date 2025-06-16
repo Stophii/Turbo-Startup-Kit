@@ -58,19 +58,19 @@ use filename::*;
 
 By adding mod and use to the top of your file, you can utilize your new file seamlessly
 
-In this example im going to name my file `state.rs` so my `mod` and `use` will look like this
+In this example I'm going to name my file `state.rs` so my `mod` and `use` will look like this
 
 ```rust
 mod state;
 use state::*;
 ```
 
-> **Tip:** You can save your project for real-time updates with `cmd + s` or `ctrl + s`. And you can reload it with `cmd + r` or `ctrl + r`! Troubleshoot and make games fast by saving and testing a lot!
+> **Tip:** You can save your project for real-tI'me updates with `cmd + s` or `ctrl + s`. And you can reload it with `cmd + r` or `ctrl + r`! Troubleshoot and make games fast by saving and testing a lot!
 
 
 ## State Machine
 
-lets add some substance to that second file and include a state machine in our project
+let's add some substance to that second file and include a state machine in our project
 
 ```rust
 #[derive(BorshDeserialize, BorshSerialize, Debug, Clone, PartialEq)]
@@ -133,34 +133,149 @@ turbo::go! {
 
 ## Adding Sprites
 
-Now lets get into adding some sprites! First off we need a sprites folder, this is as simple as making a new folder named `sprites` inside of the src folder of your project!
+Now let's get into adding some sprites! First off we need a sprites folder, this is as sI'mple as making a new folder named `sprites` right alongside your src folder.
+
+Sprites added to this folder in the file format of: `.png`, `.bmp`, `.jpg/.jpeg`, `.gif`, `.webp`, and `.ase/.aseprite` will be able to be used!
+
+> **Tip:** You can make a `fonts` and `audio` folder in the same place to add sounds or sound effects as well as fonts!
 
 ```rust
+sprite!("Decapod#Idle");
+sprite!("Wizzy", x = 150, y = 45);
+```
+
+Sprites made in Aesprite will need to have their appropriate tag referenced, in this scenario I am choosing to display the idle anI'mation with the `#Idle` tag.
+
+If you wanted to use inputs to change your sprite you can use an anI'mation key and access anI'mation commands
+
+```rust
+    let crab = anI'mation::get("crab");
+
+    sprite!(
+	anI'mation_key = "crab",
+	default_sprite = "Decapod#Idle",
+    );
+
+    if gamepad(0).right.just_pressed() {
+	crab.use_sprite("Decapod#Ranged Attack");
+	crab.set_repeat(1);
+    }
+```
+
+now if I hit the right arrow key or D on the keyboard my sprite will use it's `#Ranged Attack` and then go back to `#Idle`
+
+> **Tip:** Check out the sprite SDK for more info [here](https://docs.turbo.computer/learn/api/sprites)! 
+
+
+## Power of Tween
+
+Now we have some sprites but nothing moves other than the anI'mations I have. let's go ahead and add some tweening so the wizzy dodged the attack!
+
+First let's add a `Tween` into the `Gamestate`
+
+```rust
+turbo::init! {
+    struct GameState {
+        screen: Screen,
+        wizzy_tween: Tween<f32>,
+    } = {
+        Self {
+            screen: Screen::Title,
+            wizzy_tween: Tween::new(150.0)
+                .duration(60)
+                .ease(Easing::EaseInCirc),
+
+        }
+    }
+}
+```
+
+with `wizzy_tween` we just need to go change our x position of the wizzy sprite to the `wizzy_tween` we can do that with `.get()`
+
+
+```rust
+let x = state.wizzy_tween.get();
 
 ```
 
-Over your `turbo::go!`.
+and update the sprite to match
 
-The above code is using some of the values we initialized in GameState and calls them with the `state.` prefix before the **field**. The purpose of this example is to showcase the use of our initialized fields and how we can change them. If you don't understand everything that is happening, that is quite alright — just understand the basic principles we've covered so far and build on that. Those principles are:
+```rust
+sprite!("Wizzy", x = x, y = 45);
 
-- turbo::init is where we initialize a **field**. **Fields** have a _name_ and a _type_.
+```
 
-- turbo::go continually runs, so we can write macros and call our **fields** there.
+and let's just use our gamepad input as the trigger to change the position
 
-- Trying to reference something in `GameState` can be done by using the format `state.name`.
+```rust
+    if gamepad(0).right.just_pressed() {
+	crab.use_sprite("Decapod#Ranged Attack");
+	crab.set_repeat(1);
+	state.wizzy_tween.set(200.0); //<-- add this
+    }
+```
 
-Understanding and progressing is a journey, and the purpose of this guide is to help you take those first steps.
+now the wizzy dodges the attack!
 
-## Common Errors
+If we wanted we can reset hI'm like this
 
-The final thing to go over is just some basic bugs you might see in your terminal.
+```rust
+    if state.wizzy_tween.done() {
+	state.wizzy_tween.set(150.0);
+    }
+```
 
-- `Expected ( ; , { } )` – This appears typically when you have a syntax error. Forgetting to close a macro with a `;` or initializing values in `GameState` and not using `,` are common ways to run into this. `if` statements open with `{` and close with `}` — this is another common cause.
+## Pushing the Bounds
 
-- `Mismatched types` – Mismatched types typically happen when the system expects a value to be a certain type, and the value provided is not of that type. For example, if I initialized `decimal_number` as `0`, this would not be an `f32`, since it's missing the decimal point. The correct way to write it would be `0.0`.
+Alright now for the grand finale let's add in a button we can click with the mouse. We'll use `bounds` to accomplish this. let's start off by adding in our `pointer` and our `canvas_bounds`
 
-- `Cannot borrow` – Borrowing is probably the first roadblock you'll hit as a new Rust dev. It happens when you try to use a value that's already being used (borrowed) elsewhere. This often shows up when you start making custom functions that use values from your state. For now, just know that borrowing exists and don’t let it slow you down — it gets clearer over time.
+```rust
+    let p = pointer();
+    let canvas_bounds = bounds::canvas();
+```
 
-> **Tip:** Check out our [SDK](https://docs.turbo.computer/learn/guides/rust-basics) for more resources!
+Now let's build on this by adding in our button with `bounds`!
 
-Thanks for the read and don't forget to check out our [Turbo-Tools](https://www.youtube.com/playlist?list=PL4thXl4CNv5IjPSx9-_f-F60zZlsORw2z)
+```rust
+    let button = Bounds::with_size(48, 14)
+	.anchor_center(&canvas_bounds)
+	.translate_y(16);
+    
+    let is_btn_hovered = p.xy().intersects_bounds(button);
+
+    let (regular_color, hover_color, pressed_color) = (0x33CCFFff, 0x66DDFFFF, 0x00FFFFFF);
+
+    let button_color = if p.pressed() && is_btn_hovered {
+	pressed_color
+    } else if is_btn_hovered {
+	hover_color
+    } else {
+	regular_color
+    };
+
+    rect!(
+	color = button_color,
+	xy = button.xy(),
+	wh = button.wh(),
+	border_radius = 2,
+    );
+
+    let label_bounds = button.inset_left(4).inset_top(4);
+    text!("Attack!", x = label_bounds.x(), y = label_bounds.y(), font = "medium");
+```
+
+and finally let's add a reaction for clicking this button
+
+```rust
+    if is_btn_hovered && p.just_pressed() {
+	crab.use_sprite("Decapod#Ranged Attack");
+	crab.set_repeat(1);
+	state.wizzy_tween.set(200.0);
+    }
+```
+
+Now instead of key inputs we can just press the button to try to attack the Wizzy!
+
+Thanks for following along, hopefully you understand how to use a `State Machine`, add a `Sprite`, `Tween` an object, and use `Bounds`!
+
+>**Tip** Join our [discord](discord.gg/V5YWWvQvKW) and message `Stophy` for questions!
