@@ -65,7 +65,7 @@ mod state;
 use state::*;
 ```
 
-> **Tip:** You can save your project for real-tI'me updates with `cmd + s` or `ctrl + s`. And you can reload it with `cmd + r` or `ctrl + r`! Troubleshoot and make games fast by saving and testing a lot!
+> **Tip:** You can save your project for real-time updates with `cmd + s` or `ctrl + s`. And you can reload it with `cmd + r` or `ctrl + r`! Troubleshoot and make games fast by saving and testing a lot!
 
 
 ## State Machine
@@ -133,7 +133,7 @@ turbo::go! {
 
 ## Adding Sprites
 
-Now let's get into adding some sprites! First off we need a sprites folder, this is as sI'mple as making a new folder named `sprites` right alongside your src folder.
+Now let's get into adding some sprites! First off we need a sprites folder, this is as simple as making a new folder named `sprites` right alongside your src folder.
 
 Sprites added to this folder in the file format of: `.png`, `.bmp`, `.jpg/.jpeg`, `.gif`, `.webp`, and `.ase/.aseprite` will be able to be used!
 
@@ -144,15 +144,15 @@ sprite!("Decapod#Idle");
 sprite!("Wizzy", x = 150, y = 45);
 ```
 
-Sprites made in Aesprite will need to have their appropriate tag referenced, in this scenario I am choosing to display the idle anI'mation with the `#Idle` tag.
+Sprites made in Aesprite will need to have their appropriate tag referenced, in this scenario I am choosing to display the idle animation with the `#Idle` tag.
 
-If you wanted to use inputs to change your sprite you can use an anI'mation key and access anI'mation commands
+If you wanted to use inputs to change your sprite you can use an animation key and access animation commands
 
 ```rust
-    let crab = anI'mation::get("crab");
+    let crab = animation::get("crab");
 
     sprite!(
-	anI'mation_key = "crab",
+	animation_key = "crab",
 	default_sprite = "Decapod#Idle",
     );
 
@@ -169,7 +169,7 @@ now if I hit the right arrow key or D on the keyboard my sprite will use it's `#
 
 ## Power of Tween
 
-Now we have some sprites but nothing moves other than the anI'mations I have. let's go ahead and add some tweening so the wizzy dodged the attack!
+Now we have some sprites but nothing moves other than the animations I have. let's go ahead and add some tweening so the wizzy dodged the attack!
 
 First let's add a `Tween` into the `Gamestate`
 
@@ -217,7 +217,7 @@ and let's just use our gamepad input as the trigger to change the position
 
 now the wizzy dodges the attack!
 
-If we wanted we can reset hI'm like this
+If we wanted we can reset him like this
 
 ```rust
     if state.wizzy_tween.done() {
